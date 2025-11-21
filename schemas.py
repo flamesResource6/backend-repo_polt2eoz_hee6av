@@ -1,48 +1,45 @@
 """
-Database Schemas
+Database Schemas for Free Fire Max Tournament App
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model represents a MongoDB collection. The collection name
+is the lowercase of the class name (Tournament -> "tournament").
 """
-
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Literal
+from datetime import datetime
 
-# Example schemas (replace with your own):
+class Tournament(BaseModel):
+    title: str = Field(..., description="Tournament title")
+    description: Optional[str] = Field(None, description="Short description")
+    game: str = Field("Free Fire Max", description="Game name")
+    mode: Literal["Solo", "Duo", "Squad"] = Field("Squad", description="Match mode")
+    prize_pool: Optional[str] = Field(None, description="Prize pool details")
+    entry_fee: Optional[str] = Field(None, description="Entry fee details")
+    max_participants: int = Field(48, ge=1, le=1000, description="Maximum number of teams/players")
+    starts_at: Optional[datetime] = Field(None, description="Scheduled start time (UTC)")
+    rules: Optional[str] = Field(None, description="Rules and format")
+    status: Literal["upcoming", "ongoing", "completed"] = Field("upcoming")
+    banner_url: Optional[str] = Field(None, description="Banner image URL")
+    region: Optional[str] = Field("Global", description="Server/Region")
+    share_code: Optional[str] = Field(None, description="Short share code for the tournament")
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class Participant(BaseModel):
+    tournament_id: str = Field(..., description="Linked tournament id")
+    name: str = Field(..., description="Player or team representative name")
+    ign: Optional[str] = Field(None, description="In-game name (IGN)")
+    team_name: Optional[str] = Field(None, description="Team name (if Squad/Duo)")
+    contact_email: Optional[str] = Field(None, description="Contact email")
+    contact_phone: Optional[str] = Field(None, description="Contact phone")
+    region: Optional[str] = Field(None, description="Region/Server")
+    notes: Optional[str] = Field(None, description="Additional info")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
-
-# Add your own schemas here:
-# --------------------------------------------------
-
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class Match(BaseModel):
+    tournament_id: str = Field(..., description="Linked tournament id")
+    round_name: str = Field(..., description="Round name, e.g., Qualifiers, Finals")
+    map_name: Optional[str] = Field(None, description="Map name")
+    scheduled_at: Optional[datetime] = Field(None, description="Scheduled time (UTC)")
+    room_id: Optional[str] = Field(None, description="Custom room ID")
+    room_password: Optional[str] = Field(None, description="Custom room password")
+    status: Literal["scheduled", "live", "completed"] = Field("scheduled")
+    participants: Optional[List[str]] = Field(None, description="Participant ids/names involved")
+    result: Optional[dict] = Field(None, description="Result payload with placements/kills etc.")
